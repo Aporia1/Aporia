@@ -10,7 +10,7 @@ import asyncio
 app = Flask('')
 @app.route('/')
 def home():
-    return "Lordum, botunuz 7/24 uyanık!"
+    return "Bot Online!"
 
 def run():
     port = int(os.environ.get("PORT", 10000))
@@ -25,7 +25,7 @@ def keep_alive():
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 ATERNOS_SESSION = os.getenv("ATERNOS_SESSION")
 
-# --- BOT KURULUMU ---
+# --- BOT AYARLARI ---
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=intents)
 
@@ -36,14 +36,13 @@ async def aternos_baglan_async():
     if not ATERNOS_SESSION:
         print("❌ HATA: ATERNOS_SESSION bulunamadı!")
         return
-
     try:
-        print("⏳ Aternos'a bağlanılıyor...")
-        # YENİ SİSTEM: login_with_session yerine doğrudan Client içinde session veriyoruz
-        atclient = Client(ATERNOS_SESSION) 
+        print("⏳ Aternos kalesine sızılıyor...")
+        # YENİ SİSTEM: login_with_session tamamen kalktı.
+        atclient = Client(session=ATERNOS_SESSION) 
         aternos_hesap = atclient.account
         sunucu = aternos_hesap.list_servers()[0]
-        print(f"✅ Başarıyla bağlanıldı: {sunucu.address}")
+        print(f"✅ Bağlantı BAŞARILI: {sunucu.address}")
     except Exception as e:
         print(f"❌ Aternos Hatası: {e}")
         sunucu = None
@@ -51,7 +50,7 @@ async def aternos_baglan_async():
 @bot.event
 async def on_ready():
     await bot.change_presence(activity=discord.Game(name="!sunucuac emrini bekliyor"))
-    print(f"🚀 {bot.user} DİSCORD'A GİRDİ!")
+    print(f"🚀 {bot.user} ONLINE!")
     await aternos_baglan_async()
 
 @bot.command()
@@ -59,27 +58,15 @@ async def sunucuac(ctx):
     global sunucu
     if sunucu is None:
         await aternos_baglan_async()
-        
     if sunucu is None:
-        await ctx.send("❌ Lordum, Aternos anahtarı (Session ID) hatalı! Render panelinden güncelleyin.")
+        await ctx.send("❌ Bağlantı kurulamadı. Render panelinden Session ID'yi güncelleyin.")
         return
-        
-    await ctx.send("Emredersiniz yüce efendim! Sunucu şalteri indiriliyor...")
+    await ctx.send("Emredersiniz yüce efendim! Şalter indiriliyor...")
     try:
-        # Sunucuyu dondurmadan başlat
         await asyncio.to_thread(sunucu.start)
-        await ctx.send("✅ Karanlık Lord uyanıyor! Sunucu açılıyor.")
+        await ctx.send("✅ Sunucu açılıyor!")
     except Exception as e:
         await ctx.send(f"❌ Hata: {e}")
-
-@bot.command()
-async def baglan(ctx):
-    await ctx.send("⏳ Bağlantı tazeleniyor...")
-    await aternos_baglan_async()
-    if sunucu:
-        await ctx.send("✅ Bağlantı kuruldu!")
-    else:
-        await ctx.send("❌ Başarısız. Session ID'yi kontrol edin.")
 
 if __name__ == "__main__":
     keep_alive()
